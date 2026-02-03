@@ -1,36 +1,40 @@
--- CBRO Project: Fixed Loader
-print("Attempting to load script...")
+-- CBRO REWRITE
+print("CBRO Script Starting...")
 
--- 1. Get the UI Library
--- I changed this to use the cleaner raw link to avoid redirects
-local uiUrl = "https://raw.githubusercontent.com/misterzeee/SevereUiLib/main/MainByteCode.lua"
-local uiSuccess, uiContent = pcall(function() return game:HttpGet(uiUrl) end)
-
-if not uiSuccess then 
-    warn("Failed to fetch UI Lib from GitHub! ❌")
-    return 
+local function loadLib()
+    -- Attempt to load the UI library
+    local success, result = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/misterzeee/SevereUiLib/main/MainByteCode.lua"))()
+    end)
+    
+    if success and result then
+        return result
+    else
+        -- Fallback if the UI Lib is the thing causing Error 2
+        warn("UI Library failed to load. It might still be bytecode!")
+        return nil
+    end
 end
 
--- 2. Try to load the UI
-local uiLoadSuccess, zeeUi = pcall(function()
-    local f = loadstring(uiContent)
-    return f()
-end)
+local zeeUi = loadLib()
 
-if not uiLoadSuccess or type(zeeUi) ~= "table" then
-    warn("UI Library is broken or version mismatched (Error 2). ⚠️")
-    -- We can't continue without the UI, so we stop here.
-    return
+if zeeUi then
+    zeeUi:setTheme("Emerald")
+    local win = zeeUi:createWindow({title = "misterzeee's CBRO Rage"})
+    local tab1 = win:addTab({text = "Gun Mods"})
+
+    tab1:addButton({text = "Click to Mod Guns", OnClick = function()
+        local Weapons = game:GetService("ReplicatedStorage"):FindFirstChild("Weapons")
+        if Weapons then
+            for _, v in pairs(Weapons:GetChildren()) do
+                if v:FindFirstChild("FireRate") then
+                    v.FireRate.Value = 0.05 -- Super fast!
+                    print("Modded: " .. v.Name)
+                end
+            end
+        end
+    end})
+else
+    -- This shows up in F9 if the UI lib is the problem
+    print("FAILED: UI Lib is either down or needs to be plain text too.")
 end
-
--- 3. If UI loaded, build the menu
-print("UI Loaded! Building Menu... ✨")
-zeeUi:setTheme("Emerald")
-
-local win = zeeUi:createWindow({title = "misterzeee's CBRO Rage Menu"})
-local tab1 = win:addTab({text = "Gun Mods"})
-
--- Example Button to test if it's working
-tab1:addButton({text = "Test Mod", OnClick = function()
-    print("Mod button clicked!")
-end})
